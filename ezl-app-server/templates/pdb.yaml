@@ -1,0 +1,13 @@
+{{- if .Values.podDisruptionBudget -}}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  labels:
+    {{- include "ezl-app-server.labels" . | nindent 4 }}
+  name: {{ include "ezl-app-server.fullname" . }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "ezl-app-server.selectorLabels" . | nindent 6 }}
+  {{ toYaml .Values.podDisruptionBudget | nindent 2 }}
+{{- end -}}
