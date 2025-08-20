@@ -1,6 +1,6 @@
 global:
   image:
-    tag: latest
+    tag: v2.0
 
 serviceAccount:
   annotations:
