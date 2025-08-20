@@ -1,6 +1,11 @@
 global:
   image:
     tag: latest
+
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::863422182520:role/ezl-app-server-dev-role"
+
 resources:
   requests:
     cpu: 500m

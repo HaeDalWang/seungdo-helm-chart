@@ -41,7 +41,8 @@ serviceAccount:
   # Automatically mount a ServiceAccount's API credentials?
   automount: true
   # Annotations to add to the service account
-  annotations: {}
+  annotations:
+    eks.amazonaws.com/role-arn: ""  # 이 값은 values_dev.yaml에서 오버라이드됨
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
   name: ""
