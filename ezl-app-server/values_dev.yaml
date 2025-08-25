@@ -4,6 +4,10 @@ global:
   image:
     tag: "latest"
 
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::863422182520:role/ezl-app-server-dev-role"
+
 # 일반 Deployment 사용 (빠름)
 rollout:
   enabled: false

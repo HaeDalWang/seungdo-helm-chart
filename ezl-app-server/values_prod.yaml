@@ -4,6 +4,9 @@ global:
   image:
     tag: ""  # 반드시 명시적으로 지정해야 함
 
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::863422182520:role/ezl-app-server-dev-role"
 # Argo Rollouts 블루-그린 배포 사용
 rollout:
   enabled: true
