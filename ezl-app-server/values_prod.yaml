@@ -1,0 +1,45 @@
+# 프로덕션 환경용 - 안전한 블루-그린 배포
+# 사용법: helm install app . -f values_prod.yaml
+global:
+  image:
+    tag: ""  # 반드시 명시적으로 지정해야 함
+
+# Argo Rollouts 블루-그린 배포 사용
+rollout:
+  enabled: true
+  
+  strategy:
+    blueGreen:
+      # 수동 승인 필수 (프로덕션 안전성)
+      autoPromotionEnabled: false
+      
+      # 5분간 이전 버전 유지 (롤백 대비)
+      scaleDownDelaySeconds: 300
+      
+      # 프리뷰는 최소한으로
+      previewReplicaCount: 1
+      
+      # 프로덕션에서는 분석 권장
+      prePromotionAnalysis:
+        enabled: false  # 필요시 true로 변경
+
+  # 분석 템플릿 (필요시 활성화)
+  analysisTemplate:
+    enabled: false
+
+# 프로덕션 레플리카 수
+replicaCount: 5
+
+
+# 프로덕션 오토스케일링
+autoscaling:
+  enabled: true
+  minReplicas: 5
+  maxReplicas: 20
+  triggers:
+    cpu:
+      enabled: true
+      targetUtilization: "70"
+    memory:
+      enabled: true
+      targetUtilization: "80"
