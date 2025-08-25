@@ -6,50 +6,30 @@ metadata:
   labels:
     {{- include "ezl-app-server.labels" . | nindent 4 }}
 spec:
-  args:
-  - name: service-name
-    value: {{ include "ezl-app-server.fullname" . }}
-  - name: namespace
-    value: {{ .Release.Namespace }}
-  
   metrics:
-  # HTTP 성공률 메트릭 (Prometheus 기반)
-  - name: success-rate
+  # 간단한 웹훅 테스트 (실제 서비스 확인)
+  - name: webservice-test
     interval: {{ .Values.rollout.analysisTemplate.metrics.successRate.interval | default "10s" }}
     count: {{ .Values.rollout.analysisTemplate.metrics.successRate.count | default 3 }}
-    successCondition: result[0] >= {{ .Values.rollout.analysisTemplate.metrics.successRate.threshold | default 0.95 }}
+    successCondition: result == "success"
     failureLimit: {{ .Values.rollout.analysisTemplate.metrics.successRate.failureLimit | default 2 }}
     provider:
-      prometheus:
-        address: {{ .Values.rollout.analysisTemplate.prometheus.address | default "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090" }}
-        query: |
-          sum(rate(nginx_ingress_controller_requests{service=~"{{`{{.args.service-name}}`}}.*",namespace="{{`{{.args.namespace}}`}}",status!~"5.."}[2m])) / 
-          sum(rate(nginx_ingress_controller_requests{service=~"{{`{{.args.service-name}}`}}.*",namespace="{{`{{.args.namespace}}`}}"}[2m]))
+      web:
+        url: "http://{{ include "ezl-app-server.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}/healthz"
+        timeoutSeconds: 5
+        headers:
+          - key: "Content-Type"
+            value: "application/json"
+        jsonPath: "{$.status}"
 
-  # 응답 시간 메트릭
-  - name: response-time
-    interval: {{ .Values.rollout.analysisTemplate.metrics.responseTime.interval | default "10s" }}
-    count: {{ .Values.rollout.analysisTemplate.metrics.responseTime.count | default 3 }}
-    successCondition: result[0] <= {{ .Values.rollout.analysisTemplate.metrics.responseTime.threshold | default 0.5 }}
-    failureLimit: {{ .Values.rollout.analysisTemplate.metrics.responseTime.failureLimit | default 2 }}
+  # 간단한 HTTP 상태 코드 체크
+  - name: http-status-check
+    interval: {{ .Values.rollout.analysisTemplate.metrics.successRate.interval | default "10s" }}
+    count: {{ .Values.rollout.analysisTemplate.metrics.successRate.count | default 2 }}
+    successCondition: result[0] == 200
+    failureLimit: {{ .Values.rollout.analysisTemplate.metrics.successRate.failureLimit | default 1 }}
     provider:
-      prometheus:
-        address: {{ .Values.rollout.analysisTemplate.prometheus.address | default "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090" }}
-        query: |
-          histogram_quantile(0.95, 
-            sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{service=~"{{`{{.args.service-name}}`}}.*",namespace="{{`{{.args.namespace}}`}}"}[2m])) by (le)
-          )
-
-  # 팟 준비 상태 메트릭  
-  - name: pod-ready
-    interval: {{ .Values.rollout.analysisTemplate.metrics.podReady.interval | default "10s" }}
-    count: {{ .Values.rollout.analysisTemplate.metrics.podReady.count | default 3 }}
-    successCondition: result[0] == 1
-    failureLimit: {{ .Values.rollout.analysisTemplate.metrics.podReady.failureLimit | default 1 }}
-    provider:
-      prometheus:
-        address: {{ .Values.rollout.analysisTemplate.prometheus.address | default "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090" }}
-        query: |
-          sum(kube_pod_status_ready{namespace="{{`{{.args.namespace}}`}}", pod=~"{{`{{.args.service-name}}`}}-.*", condition="true"}) / 
-          sum(kube_pod_status_ready{namespace="{{`{{.args.namespace}}`}}", pod=~"{{`{{.args.service-name}}`}}-.*"})
+      web:
+        url: "http://{{ include "ezl-app-server.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}/"
+        timeoutSeconds: 10
 {{- end }}

@@ -37,11 +37,6 @@ spec:
       prePromotionAnalysis:
         templates:
         - templateName: {{ include "ezl-app-server.fullname" . }}-success-rate
-        args:
-        - name: service-name
-          value: {{ include "ezl-app-server.fullname" . }}
-        - name: namespace
-          value: {{ .Release.Namespace }}
       {{- end }}
       
       # 프로모션 후 자동 분석 설정
@@ -49,11 +44,6 @@ spec:
       postPromotionAnalysis:
         templates:
         - templateName: {{ include "ezl-app-server.fullname" . }}-success-rate
-        args:
-        - name: service-name
-          value: {{ include "ezl-app-server.fullname" . }}
-        - name: namespace
-          value: {{ .Release.Namespace }}
       {{- end }}
 
   # 리비전 히스토리 제한
