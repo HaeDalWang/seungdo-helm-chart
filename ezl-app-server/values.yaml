@@ -190,20 +190,10 @@ rollout:
       # 프로모션 전 자동 분석 설정
       prePromotionAnalysis:
         enabled: false
-        templates:
-        - templateName: success-rate
-        args:
-        - name: service-name
-          value: "{{ include \"ezl-app-server.fullname\" . }}"
       
       # 프로모션 후 자동 분석 설정  
       postPromotionAnalysis:
         enabled: false
-        templates:
-        - templateName: success-rate
-        args:
-        - name: service-name
-          value: "{{ include \"ezl-app-server.fullname\" . }}"
 
   # 프리뷰 서비스 설정
   previewService:

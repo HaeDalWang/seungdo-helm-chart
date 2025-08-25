@@ -36,28 +36,24 @@ spec:
       {{- if .Values.rollout.strategy.blueGreen.prePromotionAnalysis.enabled }}
       prePromotionAnalysis:
         templates:
-        {{- range .Values.rollout.strategy.blueGreen.prePromotionAnalysis.templates }}
-        - templateName: {{ .templateName }}
-        {{- end }}
+        - templateName: {{ include "ezl-app-server.fullname" . }}-success-rate
         args:
-        {{- range .Values.rollout.strategy.blueGreen.prePromotionAnalysis.args }}
-        - name: {{ .name }}
-          value: {{ .value | quote }}
-        {{- end }}
+        - name: service-name
+          value: {{ include "ezl-app-server.fullname" . }}
+        - name: namespace
+          value: {{ .Release.Namespace }}
       {{- end }}
       
       # 프로모션 후 자동 분석 설정
       {{- if .Values.rollout.strategy.blueGreen.postPromotionAnalysis.enabled }}
       postPromotionAnalysis:
         templates:
-        {{- range .Values.rollout.strategy.blueGreen.postPromotionAnalysis.templates }}
-        - templateName: {{ .templateName }}
-        {{- end }}
+        - templateName: {{ include "ezl-app-server.fullname" . }}-success-rate
         args:
-        {{- range .Values.rollout.strategy.blueGreen.postPromotionAnalysis.args }}
-        - name: {{ .name }}
-          value: {{ .value | quote }}
-        {{- end }}
+        - name: service-name
+          value: {{ include "ezl-app-server.fullname" . }}
+        - name: namespace
+          value: {{ .Release.Namespace }}
       {{- end }}
 
   # 리비전 히스토리 제한
