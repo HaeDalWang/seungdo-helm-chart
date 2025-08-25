@@ -21,3 +21,6 @@ ingress:
 
 args:
 - /app/log-generator.sh
+
+replicaCount: 4
+revisionHistoryLimit: 3
