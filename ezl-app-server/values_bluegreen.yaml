@@ -1,28 +1,10 @@
+# 블루-그린 배포용 Values 파일 예시
+# 사용법: helm upgrade --install app-name . -f values_bluegreen.yaml
+
+# 기본 설정 상속
 global:
   image:
-    tag: v2.0
-
-serviceAccount:
-  annotations:
-    eks.amazonaws.com/role-arn: "arn:aws:iam::863422182520:role/ezl-app-server-dev-role"
-
-resources:
-  requests:
-    cpu: 500m
-  limits:
-    cpu: 500m
-ingress:
-  enabled: true
-  className: nginx
-  hosts:
-    - host: app-1.seungdobae.com
-      path: /
-      pathType: Prefix
-
-args:
-- /app/log-generator.sh
-
-revisionHistoryLimit: 3
+    tag: "v1.2.3"  # 배포할 이미지 태그
 
 # Rollout 활성화
 rollout:
@@ -69,3 +51,12 @@ rollout:
 
 # 레플리카 수
 replicaCount: 2
+
+# 리소스 설정
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi

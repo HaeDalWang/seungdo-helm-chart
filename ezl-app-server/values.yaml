@@ -169,3 +169,74 @@ secret:
   secretName: ezl-app-server-secrets
   secretKey:
   - DB_PASSWORD
+
+# Argo Rollouts 블루-그린 배포 설정
+rollout:
+  # Rollout 사용 여부 (false면 기본 Deployment 사용)
+  enabled: false
+  
+  # 블루-그린 배포 전략
+  strategy:
+    blueGreen:
+      # 자동 프로모션 설정 (false면 수동 승인 필요)
+      autoPromotionEnabled: false
+      
+      # 이전 버전 스케일 다운 지연 시간 (초)
+      scaleDownDelaySeconds: 30
+      
+      # 프리뷰 환경 레플리카 수 (선택사항, 미설정시 메인과 동일)
+      previewReplicaCount: 1
+      
+      # 프로모션 전 자동 분석 설정
+      prePromotionAnalysis:
+        enabled: false
+        templates:
+        - templateName: success-rate
+        args:
+        - name: service-name
+          value: "{{ include \"ezl-app-server.fullname\" . }}"
+      
+      # 프로모션 후 자동 분석 설정  
+      postPromotionAnalysis:
+        enabled: false
+        templates:
+        - templateName: success-rate
+        args:
+        - name: service-name
+          value: "{{ include \"ezl-app-server.fullname\" . }}"
+
+  # 프리뷰 서비스 설정
+  previewService:
+    type: ClusterIP
+    # NodePort 사용시 포트 지정
+    # nodePort: 30080
+
+  # 분석 템플릿 설정
+  analysisTemplate:
+    enabled: false
+    
+    # Prometheus 설정
+    prometheus:
+      address: "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090"
+    
+    # 메트릭별 설정
+    metrics:
+      # HTTP 성공률
+      successRate:
+        interval: "10s"
+        count: 3
+        threshold: 0.95  # 95% 이상 성공률
+        failureLimit: 2
+      
+      # 응답 시간
+      responseTime:
+        interval: "10s" 
+        count: 3
+        threshold: 0.5   # 0.5초 이하
+        failureLimit: 2
+      
+      # 팟 준비 상태
+      podReady:
+        interval: "10s"
+        count: 3
+        failureLimit: 1
