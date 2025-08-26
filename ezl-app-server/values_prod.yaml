@@ -2,11 +2,8 @@
 # 사용법: helm install app . -f values_prod.yaml
 global:
   image:
-    tag: ""  # 반드시 명시적으로 지정해야 함
+    tag: "v1.0"  # 반드시 명시적으로 지정해야 함
 
-serviceAccount:
-  annotations:
-    eks.amazonaws.com/role-arn: "arn:aws:iam::863422182520:role/ezl-app-server-dev-role"
 # Argo Rollouts 블루-그린 배포 사용
 rollout:
   enabled: true
@@ -33,6 +30,40 @@ rollout:
 # 프로덕션 레플리카 수
 replicaCount: 5
 
+# 프로덕션 리소스
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+# 엄격한 헬스체크
+startupProbe:
+  httpGet:
+    path: /api/intgapp/ping/
+    port: 8000
+  failureThreshold: 5
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+
+livenessProbe:
+  httpGet:
+    path: /api/intgapp/ping/
+    port: 8000
+  failureThreshold: 3
+  periodSeconds: 30
+  timeoutSeconds: 5
+
+readinessProbe:
+  httpGet:
+    path: /api/intgapp/ping/
+    port: 8000
+  failureThreshold: 3
+  periodSeconds: 10
+  timeoutSeconds: 5
 
 # 프로덕션 오토스케일링
 autoscaling:

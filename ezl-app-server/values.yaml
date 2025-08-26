@@ -26,7 +26,7 @@ replicaCount: 1
 revisionHistoryLimit: 3
 
 image:
-  repository: svvwac98/ezl-app-server-log-generator
+  repository: svvwac98/ezl-app-server-python
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
@@ -160,10 +160,11 @@ tolerations: []
 
 affinity: {}
 
-command:
-- bash
-args:
-- /app/log-generator.sh
+# Python 앱은 자체적으로 실행되므로 command/args 불필요
+# command:
+# - python
+# args:
+# - app.py
 
 secret:
   secretName: ezl-app-server-secrets

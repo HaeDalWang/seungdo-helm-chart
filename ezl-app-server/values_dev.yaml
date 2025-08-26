@@ -2,7 +2,7 @@
 # 사용법: helm install app . -f values_dev.yaml
 global:
   image:
-    tag: "latest"
+    tag: "v1.0"  # Python 앱 버전
 
 serviceAccount:
   annotations:

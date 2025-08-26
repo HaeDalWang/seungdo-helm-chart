@@ -210,3 +210,4 @@ rollout:
 - [Argo Rollouts 공식 문서](https://argo-rollouts.readthedocs.io/)
 - [블루-그린 배포 가이드](https://argo-rollouts.readthedocs.io/en/stable/features/bluegreen/)
 - [Analysis Template 설정](https://argo-rollouts.readthedocs.io/en/stable/features/analysis/)
+
