@@ -5,7 +5,7 @@ EZL App Server - Python implementation v2.0
 """
 
 # 애플리케이션 버전
-APP_VERSION = "v2.0"
+APP_VERSION = "v2.1"
 
 import json
 import os

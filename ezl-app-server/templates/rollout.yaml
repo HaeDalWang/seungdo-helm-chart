@@ -20,7 +20,7 @@ spec:
       previewService: {{ include "ezl-app-server.fullname" . }}-preview
       
       # 자동 프로모션 설정
-      {{- if .Values.rollout.strategy.blueGreen.autoPromotionEnabled }}
+      {{- if hasKey .Values.rollout.strategy.blueGreen "autoPromotionEnabled" }}
       autoPromotionEnabled: {{ .Values.rollout.strategy.blueGreen.autoPromotionEnabled }}
       {{- end }}
       
