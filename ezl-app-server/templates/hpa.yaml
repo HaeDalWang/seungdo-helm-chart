@@ -8,6 +8,13 @@ metadata:
 spec:
   scaleTargetRef:
     name: {{ include "ezl-app-server.fullname" . }}
+    {{- if .Values.rollout.enabled }}
+    kind: Rollout
+    apiVersion: argoproj.io/v1alpha1
+    {{- else }}
+    kind: Deployment
+    apiVersion: apps/v1
+    {{- end }}
   pollingInterval: {{ .Values.autoscaling.pollingInterval | default 10 }}
   cooldownPeriod: {{ .Values.autoscaling.cooldownPeriod | default 60 }}
   minReplicaCount: {{ .Values.autoscaling.minReplicas }}
