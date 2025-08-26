@@ -1,8 +1,19 @@
 # 프로덕션 환경용 - 안전한 블루-그린 배포
-# 사용법: helm install app . -f values_prod.yaml
 global:
   image:
     tag: "v1.0"  # 반드시 명시적으로 지정해야 함
+
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::863422182520:role/ezl-app-server-dev-role"
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: app.seungdobae.com
+      path: /
+      pathType: Prefix
 
 # Argo Rollouts 블루-그린 배포 사용
 rollout:
@@ -27,10 +38,25 @@ rollout:
   analysisTemplate:
     enabled: false
 
-# 프로덕션 레플리카 수
+# 레플리카 수
 replicaCount: 5
+# PDB
+podDisruptionBudget:
+  minAvailable: 1
+# HPA 오토스케일링
+autoscaling:
+  enabled: true
+  minReplicas: 5
+  maxReplicas: 20
+  triggers:
+    cpu:
+      enabled: true
+      targetUtilization: "70"
+    memory:
+      enabled: true
+      targetUtilization: "80"
 
-# 프로덕션 리소스
+# 리소스
 resources:
   requests:
     cpu: 100m
@@ -64,16 +90,3 @@ readinessProbe:
   failureThreshold: 3
   periodSeconds: 10
   timeoutSeconds: 5
-
-# 프로덕션 오토스케일링
-autoscaling:
-  enabled: true
-  minReplicas: 5
-  maxReplicas: 20
-  triggers:
-    cpu:
-      enabled: true
-      targetUtilization: "70"
-    memory:
-      enabled: true
-      targetUtilization: "80"
