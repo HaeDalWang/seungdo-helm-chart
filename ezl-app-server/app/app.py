@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """
-EZL App Server - Python implementation
+EZL App Server - Python implementation v2.0
 기존 log-generator.sh의 Python 버전 + HTTP 서버
 """
+
+# 애플리케이션 버전
+APP_VERSION = "v2.0"
 
 import json
 import os
@@ -188,6 +191,16 @@ def ping():
     return jsonify({
         "status": "OK",
         "timestamp": datetime.now().isoformat()
+    })
+
+@app.route('/api/version')
+def version():
+    """애플리케이션 버전 정보"""
+    return jsonify({
+        "version": APP_VERSION,
+        "app_name": "EZL App Server",
+        "timestamp": datetime.now().isoformat(),
+        "description": "EZL App Server - Blue-Green Deployment Test"
     })
 
 @app.route('/healthz')
