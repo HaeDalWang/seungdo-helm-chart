@@ -46,6 +46,14 @@ spec:
         - templateName: {{ include "ezl-app-server.fullname" . }}-success-rate
       {{- end }}
 
+      # activeMetadata
+      activeMetadata:
+        labels:
+          role: active
+      previewMetadata:
+        labels:
+          role: preview
+
   # 리비전 히스토리 제한
   revisionHistoryLimit: {{ .Values.revisionHistoryLimit | default 3 }}
   
