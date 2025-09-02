@@ -13,7 +13,7 @@ rollout:
   enabled: false
 
 # 개발용 설정
-replicaCount: 1
+replicaCount: 2
 
 resources:
   requests:
