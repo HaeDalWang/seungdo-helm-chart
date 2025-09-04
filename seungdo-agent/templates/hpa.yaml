@@ -1,0 +1,77 @@
+{{- if .Values.autoscaling.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "seungdo-agent.fullname" . }}
+  labels:
+    {{- include "seungdo-agent.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    name: {{ include "seungdo-agent.fullname" . }}
+    {{- if .Values.rollout.enabled }}
+    kind: Rollout
+    apiVersion: argoproj.io/v1alpha1
+    {{- else }}
+    kind: Deployment
+    apiVersion: apps/v1
+    {{- end }}
+  pollingInterval: {{ .Values.autoscaling.pollingInterval | default 10 }}
+  cooldownPeriod: {{ .Values.autoscaling.cooldownPeriod | default 60 }}
+  minReplicaCount: {{ .Values.autoscaling.minReplicas }}
+  maxReplicaCount: {{ .Values.autoscaling.maxReplicas }}
+  triggers:
+    {{- if .Values.autoscaling.triggers.cpu.enabled }}
+    - type: cpu
+      metadata:
+        type: Utilization
+        value: "{{ .Values.autoscaling.triggers.cpu.targetUtilization }}"
+      {{- if .Values.autoscaling.triggers.cpu.authenticationRef }}
+      authenticationRef:
+        name: {{ .Values.autoscaling.triggers.cpu.authenticationRef }}
+      {{- end }}
+    {{- end }}
+    
+    {{- if .Values.autoscaling.triggers.memory.enabled }}
+    - type: memory
+      metadata:
+        type: Utilization
+        value: "{{ .Values.autoscaling.triggers.memory.targetUtilization }}"
+      {{- if .Values.autoscaling.triggers.memory.authenticationRef }}
+      authenticationRef:
+        name: {{ .Values.autoscaling.triggers.memory.authenticationRef }}
+      {{- end }}
+    {{- end }}
+    
+    {{- if .Values.autoscaling.triggers.rps.enabled }}
+    # RPS 기반 스케일링 (Prometheus 메트릭 기반)
+    - type: prometheus
+      metadata:
+        serverAddress: "http://thanos-query.thanos.svc.cluster.local:9090"
+        metricName: "{{ include "seungdo-agent.fullname" . }}_requests_per_second"
+        query: 'sum(irate(nginx_ingress_controller_requests{exported_service="{{ include "seungdo-agent.fullname" . }}"}[1m]))'
+        threshold: "{{ .Values.autoscaling.triggers.rps.targetRPS }}"
+    {{- end }}
+
+    {{- if .Values.autoscaling.triggers.api.enabled }}
+    # HTTP API 기반 스케일링 (고객사 람다함수 리스폰 값 기준)
+    - type: metrics-api
+      metadata:
+        targetValue: "{{ .Values.autoscaling.triggers.api.targetValue }}"
+        url: "{{ .Values.autoscaling.triggers.api.url }}"
+        valueLocation: "{{ .Values.autoscaling.triggers.api.valueLocation }}"
+    {{- end }}
+
+    {{- if .Values.autoscaling.triggers.cron }}
+    {{- range $index, $cronTrigger := .Values.autoscaling.triggers.cron }}
+    - type: cron
+      metadata:
+        timezone: {{ $cronTrigger.timezone | default "Asia/Seoul" }}
+        start: {{ $cronTrigger.start | quote }}
+        end: {{ $cronTrigger.end | quote }}
+        desiredReplicas: "{{ $cronTrigger.desiredReplicas }}"
+      {{- if $cronTrigger.name }}
+      name: {{ $cronTrigger.name }}
+      {{- end }}
+    {{- end }}
+    {{- end }}
+{{- end }} 

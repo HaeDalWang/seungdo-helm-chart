@@ -1,0 +1,28 @@
+# 개발 환경용 - 빠른 배포 
+# 사용법: helm install app . -f values_dev.yaml
+global:
+  image:
+    tag: "v1.0"  # Python 앱 버전
+
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::863422182520:role/ezl-app-server-dev-role"
+
+# 일반 Deployment 사용 (빠름)
+rollout:
+  enabled: false
+
+# 개발용 설정
+replicaCount: 2
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+# 오토스케일링 비활성화
+autoscaling:
+  enabled: false

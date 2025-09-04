@@ -1,0 +1,233 @@
+# Default values for ezl-app-server.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+global:
+  image:
+    tag: latest
+  subImage:
+    tag: ""
+  volumes: 
+    - name: secrets-volume
+      csi:
+        driver: secrets-store.csi.k8s.io
+        readOnly: true
+        volumeAttributes:
+          secretProviderClass: ezl-app-server
+  volumeMounts:
+    - name: secrets-volume
+      mountPath: "/mnt/secrets-store"
+      readOnly: true
+  envFrom:
+    - secretRef:
+        name: ezl-app-server
+
+replicaCount: 1
+revisionHistoryLimit: 3
+
+image:
+  repository: svvwac98/ezl-app-server-python
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations:
+    eks.amazonaws.com/role-arn: ""  # 이 값은 values_dev.yaml에서 오버라이드됨
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "5m"
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      path: /
+      pathType: ImplementationSpecific
+      whitelist:
+        - 0.0.0.0/0
+      denylist:
+        - 192.168.0.1
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+# startupProbe:
+#   httpGet:
+#     path: /api/intgapp/ping/
+#     port: 8000
+#   failureThreshold: 10
+#   initialDelaySeconds: 20
+#   periodSeconds: 5
+#   timeoutSeconds: 60
+# livenessProbe:
+#   httpGet:
+#     path: /api/intgapp/ping/
+#     port: 8000
+#   failureThreshold: 3
+#   periodSeconds: 5
+#   timeoutSeconds: 60
+# readinessProbe:
+#   httpGet:
+#     path: /api/intgapp/ping/
+#     port: 8000
+#   failureThreshold: 3
+#   periodSeconds: 5
+#   timeoutSeconds: 60
+
+# KEDA 기반 오토스케일링 설정
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  pollingInterval: 10  # 감시하는 주기 (초)
+  cooldownPeriod: 60  # 쿨다운 주기 (초)
+  triggers:
+    cpu:
+      enabled: false
+      targetUtilization: "80"
+    memory:
+      enabled: false
+      targetUtilization: "80"
+    rps:
+      enabled: false
+      targetRPS: "10"
+    api:
+      enabled: false
+  # #Cron 기반 스케일링 (여러 개 설정 가능)
+  # cron:
+  #   # 1. 매월 20일 오전 10시부터 16시까지 운영계 앱서버 최소 파드 수가 7개로 조정되어야한다
+  #   - name: "monthly-20events"
+  #     timezone: "Asia/Seoul"
+  #     start: "0 10 20 * *"   
+  #     end: "0 16 20 * *"
+  #     desiredReplicas: 7  
+
+# Additional volumes on the output Deployment definition.
+volumes: []
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Python 앱은 자체적으로 실행되므로 command/args 불필요
+# command:
+# - python
+# args:
+# - app.py
+
+secret:
+  secretName: ezl-app-server-secrets
+  secretKey:
+  - DB_PASSWORD
+
+# Argo Rollouts 블루-그린 배포 설정
+rollout:
+  # Rollout 사용 여부 (false면 기본 Deployment 사용)
+  enabled: false
+  
+  # 블루-그린 배포 전략
+  strategy:
+    blueGreen:
+      # 자동 프로모션 설정 (false면 수동 승인 필요)
+      autoPromotionEnabled: false
+      
+      # 이전 버전 스케일 다운 지연 시간 (초)
+      scaleDownDelaySeconds: 30
+      
+      # 프리뷰 환경 레플리카 수 (선택사항, 미설정시 메인과 동일)
+      previewReplicaCount: 1
+      
+      # 프로모션 전 자동 분석 설정
+      prePromotionAnalysis:
+        enabled: false
+      
+      # 프로모션 후 자동 분석 설정  
+      postPromotionAnalysis:
+        enabled: false
+
+  # 프리뷰 서비스 설정
+  previewService:
+    type: ClusterIP
+    # NodePort 사용시 포트 지정
+    # nodePort: 30080
+
+  # 분석 템플릿 설정
+  analysisTemplate:
+    enabled: false
+    
+    # Prometheus 설정
+    prometheus:
+      address: "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090"
+    
+    # 메트릭별 설정
+    metrics:
+      # HTTP 성공률
+      successRate:
+        interval: "10s"
+        count: 3
+        threshold: 0.95  # 95% 이상 성공률
+        failureLimit: 2
+      
+      # 응답 시간
+      responseTime:
+        interval: "10s" 
+        count: 3
+        threshold: 0.5   # 0.5초 이하
+        failureLimit: 2
+      
+      # 팟 준비 상태
+      podReady:
+        interval: "10s"
+        count: 3
+        failureLimit: 1

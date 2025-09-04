@@ -1,68 +1,17 @@
-{{- if .Values.rollout.enabled }}
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: {{ include "ezl-app-server.fullname" . }}
+  name: {{ include "seungdo-agent.fullname" . }}
   labels:
-    {{- include "ezl-app-server.labels" . | nindent 4 }}
+    {{- include "seungdo-agent.labels" . | nindent 4 }}
 spec:
-  # 레플리카 수 설정
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit | default 3 }}
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
-  
-  # 블루-그린 배포 전략 설정
-  strategy:
-    blueGreen:
-      # 활성 서비스 (프로덕션 트래픽)
-      activeService: {{ include "ezl-app-server.fullname" . }}
-      # 프리뷰 서비스 (테스트 트래픽)
-      previewService: {{ include "ezl-app-server.fullname" . }}-preview
-      
-      # 자동 프로모션 설정
-      {{- if hasKey .Values.rollout.strategy.blueGreen "autoPromotionEnabled" }}
-      autoPromotionEnabled: {{ .Values.rollout.strategy.blueGreen.autoPromotionEnabled }}
-      {{- end }}
-      
-      # 스케일 다운 지연 시간 (초) - 이전 버전을 언제 삭제할지
-      scaleDownDelaySeconds: {{ .Values.rollout.strategy.blueGreen.scaleDownDelaySeconds | default 30 }}
-      
-      # 프리뷰 복제본 수 (선택사항)
-      {{- if .Values.rollout.strategy.blueGreen.previewReplicaCount }}
-      previewReplicaCount: {{ .Values.rollout.strategy.blueGreen.previewReplicaCount }}
-      {{- end }}
-      
-      # 프로모션 전 자동 분석 설정
-      {{- if .Values.rollout.strategy.blueGreen.prePromotionAnalysis.enabled }}
-      prePromotionAnalysis:
-        templates:
-        - templateName: {{ include "ezl-app-server.fullname" . }}-success-rate
-      {{- end }}
-      
-      # 프로모션 후 자동 분석 설정
-      {{- if .Values.rollout.strategy.blueGreen.postPromotionAnalysis.enabled }}
-      postPromotionAnalysis:
-        templates:
-        - templateName: {{ include "ezl-app-server.fullname" . }}-success-rate
-      {{- end }}
-
-      # 대상 Pod 라벨에 추가됨!!
-      activeMetadata:
-        labels:
-          role: active
-      previewMetadata:
-        labels:
-          role: preview
-
-  # 리비전 히스토리 제한
-  revisionHistoryLimit: {{ .Values.revisionHistoryLimit | default 3 }}
-  
-  # 셀렉터 설정
   selector:
     matchLabels:
-      {{- include "ezl-app-server.selectorLabels" . | nindent 6 }}
-  
-  # 팟 템플릿 설정
+      {{- include "seungdo-agent.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -70,7 +19,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "ezl-app-server.labels" . | nindent 8 }}
+        {{- include "seungdo-agent.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -79,7 +28,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "ezl-app-server.serviceAccountName" . }}
+      serviceAccountName: {{ include "seungdo-agent.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -148,4 +97,3 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-{{- end }}
