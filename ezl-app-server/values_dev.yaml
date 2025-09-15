@@ -2,7 +2,7 @@
 # 사용법: helm install app . -f values_dev.yaml
 global:
   image:
-    tag: "v1.0"  # Python 앱 버전
+    tag: "v3.0-db"  # Python 앱 버전
 
 serviceAccount:
   annotations:
@@ -11,9 +11,19 @@ serviceAccount:
 # 일반 Deployment 사용 (빠름)
 rollout:
   enabled: false
+revisionHistoryLimit: 3
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    # 프로덕션 용 ingress (Active 서비스)
+    - host: app.seungdobae.com
+      path: /
+      pathType: Prefix
 
 # 개발용 설정
-replicaCount: 2
+replicaCount: 1
 
 resources:
   requests:
@@ -26,3 +36,29 @@ resources:
 # 오토스케일링 비활성화
 autoscaling:
   enabled: false
+
+# 엄격한 헬스체크
+startupProbe:
+  httpGet:
+    path: /api/intgapp/ping/
+    port: 8000
+  failureThreshold: 5
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+
+livenessProbe:
+  httpGet:
+    path: /api/intgapp/ping/
+    port: 8000
+  failureThreshold: 3
+  periodSeconds: 30
+  timeoutSeconds: 5
+
+readinessProbe:
+  httpGet:
+    path: /api/intgapp/ping/
+    port: 8000
+  failureThreshold: 3
+  periodSeconds: 10
+  timeoutSeconds: 5
