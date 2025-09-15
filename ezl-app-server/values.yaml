@@ -170,6 +170,10 @@ secret:
   secretName: ezl-app-server-secrets
   secretKey:
   - DB_PASSWORD
+  - DB_HOST
+  - DB_NAME
+  - DB_USER
+  - DB_PORT
 
 # Argo Rollouts 블루-그린 배포 설정
 rollout:

@@ -88,7 +88,7 @@ class DatabaseManager:
     def get_db_config(self) -> Dict[str, str]:
         """데이터베이스 연결 설정 가져오기"""
         # RDS 엔드포인트는 환경변수에서 가져오거나 하드코딩
-        db_host = os.getenv("DB_HOST", "mlops-rds.c8y4q2y3k2y3.ap-northeast-2.rds.amazonaws.com")
+        db_host = os.getenv("DB_HOST", "ezl-app-server.cl1bwfxhbgy4.ap-northeast-2.rds.amazonaws.com")
         db_port = os.getenv("DB_PORT", "5432")
         db_name = os.getenv("DB_NAME", "intgapp_ezl_dev")
         db_user = os.getenv("DB_USER", "ezllabs_ezl_dev")

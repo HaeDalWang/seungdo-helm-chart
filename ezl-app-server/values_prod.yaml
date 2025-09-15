@@ -1,7 +1,7 @@
 # 프로덕션 환경용 - 안전한 블루-그린 배포
 global:
   image:
-    tag: "v3.0"  # 반드시 명시적으로 지정해야 함
+    tag: "v3.0-db"  # 반드시 명시적으로 지정해야 함
 
 serviceAccount:
   annotations:
