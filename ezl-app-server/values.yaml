@@ -13,7 +13,7 @@ global:
         driver: secrets-store.csi.k8s.io
         readOnly: true
         volumeAttributes:
-          secretProviderClass: app-server
+          secretProviderClass: ezl-app-server
   volumeMounts:
     - name: secrets-volume
       mountPath: "/mnt/secrets-store"
