@@ -18,9 +18,12 @@ global:
     - name: secrets-volume
       mountPath: "/mnt/secrets-store"
       readOnly: true
-  envFrom:
-    - secretRef:
-        name: app-server
+  # envFrom:
+  #   - secretRef:
+  #       name: app-server
+  # envFrom 제거: Secrets Store CSI Driver는 Pod가 CSI volume을 마운트할 때 Secret을 생성합니다.
+  # 하지만 envFrom은 Pod 시작 전에 Secret이 필요하므로 순환 참조가 발생합니다.
+  # 애플리케이션은 /mnt/secrets-store 경로에서 직접 환경 변수를 읽어야 합니다.
 
 replicaCount: 1
 revisionHistoryLimit: 3
