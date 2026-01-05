@@ -20,7 +20,7 @@ global:
       readOnly: true
   envFrom:
     - secretRef:
-        name: app-server
+        name: ezl-app-server
 
 replicaCount: 1
 revisionHistoryLimit: 3
