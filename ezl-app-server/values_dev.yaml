@@ -17,7 +17,7 @@ ingress:
         - 58.239.25.4
 
 # 개발용 설정
-replicaCount: 1
+replicaCount: 10
 resources:
   requests:
     cpu: 100m
