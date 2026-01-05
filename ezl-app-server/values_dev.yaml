@@ -1,121 +1,57 @@
 global:
   image:
-    tag: "79fe26a"
+    tag: "v3.0-db"  # Python 앱 버전
+
 serviceAccount:
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::590183736724:role/app-server-dev-role
-resources:
-  requests:
-    cpu: 500m
-  limits:
-    cpu: 500m
+    eks.amazonaws.com/role-arn: "arn:aws:iam::863422182520:role/ezl-app-server-dev-role"
+
 ingress:
   enabled: true
   className: nginx
   hosts:
-    - host: eas.dev.myezlapp.com
-      path: /
-      pathType: Prefix
-    - host: intgapp.dev.myezlapp.com
-      path: /
-      pathType: Prefix
-    - host: eas.dev.myezlapp.com
-      path: /api/backoffice/buzzbooster/points
-      pathType: Prefix
-      whitelist:
-        - 18.179.158.39
-        - 211.168.13.178
-    - host: eas.dev.myezlapp.com
-      path: /v1/point/cs
-      pathType: Prefix
-      whitelist:
-        - 18.179.158.39
-        - 58.180.191.184
-        - 211.35.142.140
-        - 211.168.13.178
-    - host: eas.dev.myezlapp.com
-      path: /v1/backoffice/nasmedia/points
-      pathType: Prefix
-      whitelist:
-        - 183.110.238.50
-        - 183.110.238.51
-        - 183.110.238.52
-        - 183.110.238.53
-        - 211.168.13.178
-    - host: eas.dev.myezlapp.com
-      path: /v1/backoffice/buzzbooster/points
-      pathType: Prefix
-      whitelist:
-        - 18.179.158.39
-        - 211.168.13.178
-    - host: eas.dev.myezlapp.com
-      path: /v1/backoffice/buzzvil/buzzbenefit/points
-      pathType: Prefix
-      whitelist:
-        - 18.179.158.39
-        - 52.68.114.43
-        - 211.168.13.178
-    - host: django-admin.dev.myezlapp.com
+    - host: app.sd.seungdobae.com
       path: /
       pathType: Prefix
       whitelist:
-        - 211.35.142.140
-        - 1.232.232.4
-        - 211.168.13.178
-        - 222.235.212.10
-    - host: internal.eas.dev.myezlapp.com
-      path: /
-      pathType: Prefix
-    - host: eas.dev.myezlapp.com
-      path: /api/backoffice/docs
-      pathType: Prefix
-      whitelist:
-        - 211.35.142.140
-        - 211.168.13.178
-    - host: eas.dev.myezlapp.com
-      path: /api/intgapp/docs
-      pathType: Prefix
-      whitelist:
-        - 211.35.142.140
-        - 211.168.13.178
-    - host: eas.dev.myezlapp.com
-      path: /app/docs
-      pathType: Prefix
-      whitelist:
-        - 211.35.142.140
-        - 211.168.13.178
-    - host: eas.dev.myezlapp.com
-      path: /api/backoffice/auth/login
-      pathType: Prefix
-      whitelist:
-        - 211.35.142.140
-        - 1.232.232.4
-        - 211.217.244.130
-        - 106.255.231.154
-        - 211.168.13.178
-        - 222.235.212.10
-    - host: eas.dev.myezlapp.com
-      path: /v1/backoffice/users/login
-      pathType: Prefix
-      whitelist:
-        - 211.35.142.140
-        - 1.232.232.4
-        - 211.217.244.130
-        - 106.255.231.154
-        - 211.168.13.178
-        - 222.235.212.10
-args:
-  - -c
-  - python manage.py collectstatic && python manage.py migrate && gunicorn --bind 0:8000 --keep-alive 60 --statsd-host=prometheus-statsd-exporter.monitoring:9125 --statsd-prefix=app-server ezl_app_server.wsgi:application --log-level info --access-logfile - --error-logfile - --access-logformat '%(h)s %(l)s %(u)s "%(r)s" %(s)s %(b)s | duration=%(L)s'
-work-queue:
-  autoscaling:
-    enabled: true
-    minReplicas: 1
-    maxReplicas: 3
-    addressFromEnv: CELERY_BROKER_CONNECTION_STRING
-    listName: celery
-    listLength: "10"
-celery-beat:
-  replicaCount: 1
-sqs-poller:
-  replicaCount: 1
+        - 58.239.25.4
+
+# 개발용 설정
+replicaCount: 1
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+# 오토스케일링 비활성화
+autoscaling:
+  enabled: false
+
+# 엄격한 헬스체크
+startupProbe:
+  httpGet:
+    path: /api/intgapp/ping/
+    port: 8000
+  failureThreshold: 5
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+
+livenessProbe:
+  httpGet:
+    path: /api/intgapp/ping/
+    port: 8000
+  failureThreshold: 3
+  periodSeconds: 30
+  timeoutSeconds: 5
+
+readinessProbe:
+  httpGet:
+    path: /api/intgapp/ping/
+    port: 8000
+  failureThreshold: 3
+  periodSeconds: 10
+  timeoutSeconds: 5

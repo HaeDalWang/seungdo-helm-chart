@@ -26,7 +26,7 @@ replicaCount: 1
 revisionHistoryLimit: 3
 
 image:
-  repository: 992382741975.dkr.ecr.ap-northeast-2.amazonaws.com/app-server
+  repository: svvwac98/ezl-app-server-python
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
@@ -96,28 +96,28 @@ resources: {}
   #   cpu: 100m
   #   memory: 128Mi
 
-startupProbe:
-  httpGet:
-    path: /api/intgapp/ping/
-    port: 8000
-  failureThreshold: 10
-  initialDelaySeconds: 20
-  periodSeconds: 5
-  timeoutSeconds: 60
-livenessProbe:
-  httpGet:
-    path: /api/intgapp/ping/
-    port: 8000
-  failureThreshold: 3
-  periodSeconds: 5
-  timeoutSeconds: 60
-readinessProbe:
-  httpGet:
-    path: /api/intgapp/ping/
-    port: 8000
-  failureThreshold: 3
-  periodSeconds: 5
-  timeoutSeconds: 60
+# startupProbe:
+#   httpGet:
+#     path: /api/intgapp/ping/
+#     port: 8000
+#   failureThreshold: 10
+#   initialDelaySeconds: 20
+#   periodSeconds: 5
+#   timeoutSeconds: 60
+# livenessProbe:
+#   httpGet:
+#     path: /api/intgapp/ping/
+#     port: 8000
+#   failureThreshold: 3
+#   periodSeconds: 5
+#   timeoutSeconds: 60
+# readinessProbe:
+#   httpGet:
+#     path: /api/intgapp/ping/
+#     port: 8000
+#   failureThreshold: 3
+#   periodSeconds: 5
+#   timeoutSeconds: 60
 
 # KEDA 기반 오토스케일링 설정
 autoscaling:
@@ -159,89 +159,47 @@ tolerations: []
 
 affinity: {}
 
-command:
-- bash
-args:
-- -c
-- python manage.py collectstatic && gunicorn --bind 0:8000 --statsd-host=prometheus-statsd-exporter.monitoring:9125 --statsd-prefix=app-server ezl_app_server.wsgi:application --log-level info
+# Python 앱은 자체적으로 실행되므로 command/args 불필요
+# command:
+# - python
+# args:
+# - app.py
 
 secret:
-  secretName: ezl-app-server-secrets
+  secretName: sample/app
   secretKey:
-  - API_KEY
-  - FCM_CERTIFICATE_FILE_KEY
-  - CASHBEE3_FCM_CERTIFICATE_FILE_KEY
-  - CASHBEE_CHARGE_FCM_CERTIFICATE_FILE_KEY
-  - BACKOFFICE_USER_JWT_SECRET
-  - BACKOFFICE_USER_PASSWORD_SECRET
-  - CELERY_BROKER_URL
-  - CMS_API_BASE_URL
-  - CMS_TOKEN
+  - DB_PASSWORD
   - DB_HOST
   - DB_NAME
-  - DB_PASSWORD
-  - DB_PORT
   - DB_USER
-  - DJANGO_SETTINGS_MODULE
-  - ECMS_DB_NAME
-  - HYPHEN_AES256HEXKEY
-  - HYPHEN_BASE_URL
-  - HYPHEN_CLIENT_TOKEN
-  - HYPHEN_SEQUENCE_NO
-  - SENTRY_DSN
-  - SECRET_KEY
-  - USER_DATA_ENCRYPT_SALT
-  - CELERY_BROKER_CONNECTION_STRING
-  - AWS_CLOUDFRONT_URL
-  - INTGAPP_USER_JWT_SECRET
-  - EZL_AES256KEY
-  - BUZZBOOSTER_IOS_APP_ID
-  - BUZZBOOSTER_AOS_APP_ID
-  - PAYMENT_PASSWORD_HASH_SALT
-  - KAKAO_APP_ADMIN_KEY
-  - EZLWALK_POINT_EXPIRE_PERIOD_DAYS
-  - BUZZBOOSTER_POINT_EXPIRE_PERIOD_DAYS
-  - BUZZBENEFIT_POINT_EXPIRE_PERIOD_DAYS
-  - NASMEDIA_POINT_EXPIRE_PERIOD_DAYS
-  - HEALTHCHECK_API_KEY
-  - URL_SHORTENER_API_BASE_URL
-  - DEV_DB_HOST
-  - DEV_DB_NAME
-  - DEV_DB_PASSWORD
-  - DEV_DB_PORT
-  - DEV_DB_USER
-  - SES_ROLE_ARN
-  - EMAIL_RESULT_SQS_URL
-  - EZL_APPLICATION_SQS_QUEUE_URL
-  - EZL_PUSH_NOTIFICATION_EVENTS_SQS_URL
-  - USER_CI_ENCRYPT_KEY
+  - DB_PORT
   
-work-queue:
-  serviceAccount:
-    name: app-server
-  command:
-    - celery
-    - -A
-    - ezl_app_server
-    - worker
-    - --loglevel=info
-    - --concurrency=1
-  enabled: true
-celery-beat:
-  serviceAccount:
-    name: app-server
-  command:
-    - celery
-    - -A
-    - ezl_app_server
-    - beat
-    - --loglevel=info
-  enabled: true
-sqs-poller:
-  serviceAccount:
-    name: app-server
-  command:
-    - python
-    - manage.py
-    - sqs_poller
-  enabled: true
+# work-queue:
+#   serviceAccount:
+#     name: app-server
+#   command:
+#     - celery
+#     - -A
+#     - ezl_app_server
+#     - worker
+#     - --loglevel=info
+#     - --concurrency=1
+#   enabled: true
+# celery-beat:
+#   serviceAccount:
+#     name: app-server
+#   command:
+#     - celery
+#     - -A
+#     - ezl_app_server
+#     - beat
+#     - --loglevel=info
+#   enabled: true
+# sqs-poller:
+#   serviceAccount:
+#     name: app-server
+#   command:
+#     - python
+#     - manage.py
+#     - sqs_poller
+#   enabled: true
