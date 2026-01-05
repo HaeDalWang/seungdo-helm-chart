@@ -3,11 +3,11 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   labels:
-    {{- include "app-server.labels" . | nindent 4 }}
-  name: {{ include "app-server.fullname" . }}
+    {{- include "ezl-app-server.labels" . | nindent 4 }}
+  name: {{ include "ezl-app-server.fullname" . }}
 spec:
   selector:
     matchLabels:
-      {{- include "app-server.selectorLabels" . | nindent 6 }}
+      {{- include "ezl-app-server.selectorLabels" . | nindent 6 }}
   {{ toYaml .Values.podDisruptionBudget | nindent 2 }}
 {{- end -}}

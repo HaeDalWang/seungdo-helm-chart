@@ -1,14 +1,15 @@
 {{- if .Values.ingress.enabled -}}
-{{- $fullName := include "app-server.fullname" . -}}
+{{- $fullName := include "ezl-app-server.fullname" . -}}
 {{- $svcPort := .Values.service.port -}}
 {{- range .Values.ingress.hosts }}
+{{- if ne (.service | default "active") "preview" }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ $fullName }}-{{ regexFind "^([^.]+)" .host }}{{ if ne .path "/"}}{{ .path | replace "/" "-" | replace "[" "" | replace "]" "" }}{{ end }}
   labels:
-    {{- include "app-server.labels" $ | nindent 4 }}
+    {{- include "ezl-app-server.labels" $ | nindent 4 }}
   {{- with $.Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -45,5 +46,6 @@ spec:
                 name: {{ $fullName }}
                 port:
                   number: {{ $svcPort }}
+{{- end }}
 {{- end }}
 {{- end }}

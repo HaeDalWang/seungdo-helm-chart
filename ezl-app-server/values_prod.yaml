@@ -1,98 +1,147 @@
-# 프로덕션 환경용 - 안전한 블루-그린 배포
-global:
-  image:
-    tag: "v3.0-db"  # 반드시 명시적으로 지정해야 함
-
 serviceAccount:
   annotations:
-    eks.amazonaws.com/role-arn: "arn:aws:iam::863422182520:role/ezl-app-server-dev-role"
-
+    eks.amazonaws.com/role-arn: arn:aws:iam::533267146834:role/app-server-prod-role
+resources:
+  requests:
+    cpu: 1000m
+    memory: 2Gi
+  limits:
+    cpu: 1000m
+    memory: 2.5Gi
 ingress:
   enabled: true
   className: nginx
   hosts:
-    # 프로덕션 용 ingress (Active 서비스)
-    - host: app.seungdobae.com
+    - host: eas.myezlapp.com
       path: /
       pathType: Prefix
-    # 프리뷰 ingress (Preview 서비스) - preview-ingress.yaml에서 처리
-    - host: app-preview.seungdobae.com
+    - host: intgapp.myezlapp.com
       path: /
       pathType: Prefix
-      service: preview
-
-revisionHistoryLimit: 3
-# Argo Rollouts 블루-그린 배포 사용
-rollout:
-  enabled: true
-  strategy:
-    blueGreen:
-      # 수동 승인 필수 (프로덕션 안전성)
-      autoPromotionEnabled: false
-      # 5분간 이전 버전 유지 (롤백 대비)
-      scaleDownDelaySeconds: 300
-      # 프리뷰 Pod 개수, 최소한으로
-      previewReplicaCount: 1
-      # 프로덕션에서는 분석 권장
-      prePromotionAnalysis:
-        enabled: false  # 필요시 true로 변경
-      # 프로모션 후 자동 분석 설정
-      postPromotionAnalysis:
-        enabled: false  # 필요시 true로 변경
-
-  # 분석 템플릿 (필요시 활성화)
-  analysisTemplate:
-    enabled: false
-
-# 레플리카 수
-# replicaCount: 
-# PDB
-podDisruptionBudget:
-  minAvailable: 1
-# HPA 오토스케일링
+    - host: eas.myezlapp.com
+      path: /api/backoffice/buzzbooster/points
+      pathType: Prefix
+      whitelist:
+        - 18.179.158.39
+        - 211.168.13.178
+    - host: eas.myezlapp.com
+      path: /v1/point/cs
+      pathType: Prefix
+      whitelist:
+        - 18.179.158.39
+        - 58.180.191.184
+        - 211.168.13.178
+    - host: eas.myezlapp.com
+      path: /v1/backoffice/nasmedia/points
+      pathType: Prefix
+      whitelist:
+        - 183.110.238.50
+        - 183.110.238.51
+        - 183.110.238.52
+        - 183.110.238.53
+        - 211.168.13.178
+    - host: eas.myezlapp.com
+      path: /v1/backoffice/buzzbooster/points
+      pathType: Prefix
+      whitelist:
+        - 18.179.158.39
+        - 211.168.13.178
+    - host: eas.myezlapp.com
+      path: /v1/backoffice/buzzvil/buzzbenefit/points
+      pathType: Prefix
+      whitelist:
+        - 18.179.158.39
+        - 52.68.114.43
+        - 211.168.13.178
+    - host: django-admin.myezlapp.com
+      path: /
+      pathType: Prefix
+      whitelist:
+        - 211.35.142.140
+        - 1.232.232.4
+        - 211.168.13.178
+        - 222.235.212.10
+    - host: internal.eas.myezlapp.com
+      path: /
+      pathType: Prefix
+    - host: eas.myezlapp.com
+      path: /api/backoffice/auth/login
+      pathType: Prefix
+      whitelist:
+        - 211.35.142.140
+        - 1.232.232.4
+        - 211.217.244.130
+        - 106.255.231.154
+        - 211.168.13.178
+        - 222.235.212.10
+    - host: eas.myezlapp.com
+      path: /v1/backoffice/users/login
+      pathType: Prefix
+      whitelist:
+        - 211.35.142.140
+        - 1.232.232.4
+        - 211.217.244.130
+        - 106.255.231.154
+        - 211.168.13.178
+        - 222.235.212.10
+revisionHistoryLimit: 1
 autoscaling:
   enabled: true
-  minReplicas: 2
+  minReplicas: 8
   maxReplicas: 10
+  pollingInterval: 10 # 감시하는 주기 (초)
+  cooldownPeriod: 60 # 쿨다운 주기 (초)
   triggers:
     cpu:
       enabled: true
-      targetUtilization: "70"
-    memory:
-      enabled: true
       targetUtilization: "80"
-
-# 리소스
-resources:
-  requests:
-    cpu: 100m
-    memory: 128Mi
-  limits:
-    cpu: 200m
-    memory: 256Mi
-
-# 엄격한 헬스체크
-startupProbe:
-  httpGet:
-    path: /api/intgapp/ping/
-    port: 8000
-  failureThreshold: 5
-  initialDelaySeconds: 30
-  periodSeconds: 10
-  timeoutSeconds: 5
-
-livenessProbe:
-  httpGet:
-    path: /api/intgapp/ping/
-    port: 8000
-  failureThreshold: 3
-  periodSeconds: 30
-  timeoutSeconds: 5
-
-readinessProbe:
-  httpGet:
-    path: /api/intgapp/ping/
-    port: 8000
-  failureThreshold: 3
-  periodSeconds: 10
-  timeoutSeconds: 5
+    memory:
+      enabled: false
+      targetUtilization: "80"
+    rps:
+      enabled: true
+      targetRPS: "30"
+    api:
+      enabled: true
+      targetValue: "1"
+      url: "https://cgojvahipd.execute-api.ap-northeast-2.amazonaws.com/default/ezlapp_helmchart_trigger"
+      valueLocation: "replicas"
+    # Cron 기반 스케일링 (여러 개 설정 가능)
+    cron:
+      # 1. 매월 20일 오전 10시부터 16시까지 운영계 앱서버 최소 파드 수가 7개로 조정되어야한다
+      - name: "monthly-20events"
+        timezone: "Asia/Seoul"
+        start: "0 10 20 * *"
+        end: "0 16 20 * *"
+        desiredReplicas: 7
+args:
+  - -c
+  - python manage.py collectstatic && python manage.py migrate && gunicorn --bind 0:8000 --workers 3 --threads 4 --keep-alive 60 --statsd-host=prometheus-statsd-exporter.monitoring:9125 --statsd-prefix=app-server ezl_app_server.wsgi:application --log-level info --access-logfile - --error-logfile - --access-logformat '%(h)s %(l)s %(u)s "%(r)s" %(s)s %(b)s | duration=%(L)s'
+podDisruptionBudget:
+  minAvailable: 1
+work-queue:
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    addressFromEnv: CELERY_BROKER_CONNECTION_STRING
+    listName: celery
+    listLength: "10"
+  resources:
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+    limits:
+      cpu: 1000m
+      memory: 2.5Gi
+celery-beat:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 200m
+      memory: 512Mi
+sqs-poller:
+  replicaCount: 1

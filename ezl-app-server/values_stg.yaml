@@ -1,9 +1,6 @@
-global:
-  image:
-    tag: "79fe26a"
 serviceAccount:
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::590183736724:role/app-server-dev-role
+    eks.amazonaws.com/role-arn: arn:aws:iam::471112573721:role/app-server-stg-role
 resources:
   requests:
     cpu: 500m
@@ -13,27 +10,24 @@ ingress:
   enabled: true
   className: nginx
   hosts:
-    - host: eas.dev.myezlapp.com
+    - host: eas.stg.myezlapp.com
       path: /
       pathType: Prefix
-    - host: intgapp.dev.myezlapp.com
+    - host: intgapp.stg.myezlapp.com
       path: /
       pathType: Prefix
-    - host: eas.dev.myezlapp.com
+    - host: eas.stg.myezlapp.com
       path: /api/backoffice/buzzbooster/points
       pathType: Prefix
-      whitelist:
-        - 18.179.158.39
-        - 211.168.13.178
-    - host: eas.dev.myezlapp.com
+      whitelist: []
+    - host: eas.stg.myezlapp.com
       path: /v1/point/cs
       pathType: Prefix
       whitelist:
         - 18.179.158.39
         - 58.180.191.184
-        - 211.35.142.140
         - 211.168.13.178
-    - host: eas.dev.myezlapp.com
+    - host: eas.stg.myezlapp.com
       path: /v1/backoffice/nasmedia/points
       pathType: Prefix
       whitelist:
@@ -42,20 +36,20 @@ ingress:
         - 183.110.238.52
         - 183.110.238.53
         - 211.168.13.178
-    - host: eas.dev.myezlapp.com
+    - host: eas.stg.myezlapp.com
       path: /v1/backoffice/buzzbooster/points
       pathType: Prefix
       whitelist:
         - 18.179.158.39
         - 211.168.13.178
-    - host: eas.dev.myezlapp.com
+    - host: eas.stg.myezlapp.com
       path: /v1/backoffice/buzzvil/buzzbenefit/points
       pathType: Prefix
       whitelist:
         - 18.179.158.39
         - 52.68.114.43
         - 211.168.13.178
-    - host: django-admin.dev.myezlapp.com
+    - host: django-admin.stg.myezlapp.com
       path: /
       pathType: Prefix
       whitelist:
@@ -63,28 +57,10 @@ ingress:
         - 1.232.232.4
         - 211.168.13.178
         - 222.235.212.10
-    - host: internal.eas.dev.myezlapp.com
+    - host: internal.eas.stg.myezlapp.com
       path: /
       pathType: Prefix
-    - host: eas.dev.myezlapp.com
-      path: /api/backoffice/docs
-      pathType: Prefix
-      whitelist:
-        - 211.35.142.140
-        - 211.168.13.178
-    - host: eas.dev.myezlapp.com
-      path: /api/intgapp/docs
-      pathType: Prefix
-      whitelist:
-        - 211.35.142.140
-        - 211.168.13.178
-    - host: eas.dev.myezlapp.com
-      path: /app/docs
-      pathType: Prefix
-      whitelist:
-        - 211.35.142.140
-        - 211.168.13.178
-    - host: eas.dev.myezlapp.com
+    - host: eas.stg.myezlapp.com
       path: /api/backoffice/auth/login
       pathType: Prefix
       whitelist:
@@ -94,7 +70,7 @@ ingress:
         - 106.255.231.154
         - 211.168.13.178
         - 222.235.212.10
-    - host: eas.dev.myezlapp.com
+    - host: eas.stg.myezlapp.com
       path: /v1/backoffice/users/login
       pathType: Prefix
       whitelist:
@@ -104,12 +80,27 @@ ingress:
         - 106.255.231.154
         - 211.168.13.178
         - 222.235.212.10
+revisionHistoryLimit: 1
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 10
+  pollingInterval: 10 # 감시하는 주기 (초)
+  cooldownPeriod: 60 # 쿨다운 주기 (초)
+  triggers:
+    cpu:
+      enabled: true
+      targetUtilization: "80"
+    rps:
+      enabled: false
+      targetRPS: "10"
 args:
   - -c
-  - python manage.py collectstatic && python manage.py migrate && gunicorn --bind 0:8000 --keep-alive 60 --statsd-host=prometheus-statsd-exporter.monitoring:9125 --statsd-prefix=app-server ezl_app_server.wsgi:application --log-level info --access-logfile - --error-logfile - --access-logformat '%(h)s %(l)s %(u)s "%(r)s" %(s)s %(b)s | duration=%(L)s'
+  - python manage.py collectstatic && python manage.py migrate && gunicorn --bind 0:8000 --workers 2 --keep-alive 60 --statsd-host=prometheus-statsd-exporter.monitoring:9125 --statsd-prefix=app-server ezl_app_server.wsgi:application --log-level info --access-logfile - --error-logfile - --access-logformat '%(h)s %(l)s %(u)s "%(r)s" %(s)s %(b)s | duration=%(L)s'
+podDisruptionBudget: {}
 work-queue:
   autoscaling:
-    enabled: true
+    enabled: false
     minReplicas: 1
     maxReplicas: 3
     addressFromEnv: CELERY_BROKER_CONNECTION_STRING

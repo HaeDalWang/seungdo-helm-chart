@@ -1,4 +1,4 @@
-# Default values for app-server.
+# Default values for ezl-app-server.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -13,20 +13,20 @@ global:
         driver: secrets-store.csi.k8s.io
         readOnly: true
         volumeAttributes:
-          secretProviderClass: app-server
+          secretProviderClass: ezl-app-server
   volumeMounts:
     - name: secrets-volume
       mountPath: "/mnt/secrets-store"
       readOnly: true
   envFrom:
     - secretRef:
-        name: app-server
+        name: ezl-app-server
 
 replicaCount: 1
 revisionHistoryLimit: 3
 
 image:
-  repository: 992382741975.dkr.ecr.ap-northeast-2.amazonaws.com/app-server
+  repository: svvwac98/ezl-app-server-python
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
@@ -41,7 +41,8 @@ serviceAccount:
   # Automatically mount a ServiceAccount's API credentials?
   automount: true
   # Annotations to add to the service account
-  annotations: {}
+  annotations:
+    eks.amazonaws.com/role-arn: ""  # 이 값은 values_dev.yaml에서 오버라이드됨
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
   name: ""
@@ -96,28 +97,28 @@ resources: {}
   #   cpu: 100m
   #   memory: 128Mi
 
-startupProbe:
-  httpGet:
-    path: /api/intgapp/ping/
-    port: 8000
-  failureThreshold: 10
-  initialDelaySeconds: 20
-  periodSeconds: 5
-  timeoutSeconds: 60
-livenessProbe:
-  httpGet:
-    path: /api/intgapp/ping/
-    port: 8000
-  failureThreshold: 3
-  periodSeconds: 5
-  timeoutSeconds: 60
-readinessProbe:
-  httpGet:
-    path: /api/intgapp/ping/
-    port: 8000
-  failureThreshold: 3
-  periodSeconds: 5
-  timeoutSeconds: 60
+# startupProbe:
+#   httpGet:
+#     path: /api/intgapp/ping/
+#     port: 8000
+#   failureThreshold: 10
+#   initialDelaySeconds: 20
+#   periodSeconds: 5
+#   timeoutSeconds: 60
+# livenessProbe:
+#   httpGet:
+#     path: /api/intgapp/ping/
+#     port: 8000
+#   failureThreshold: 3
+#   periodSeconds: 5
+#   timeoutSeconds: 60
+# readinessProbe:
+#   httpGet:
+#     path: /api/intgapp/ping/
+#     port: 8000
+#   failureThreshold: 3
+#   periodSeconds: 5
+#   timeoutSeconds: 60
 
 # KEDA 기반 오토스케일링 설정
 autoscaling:
@@ -159,89 +160,78 @@ tolerations: []
 
 affinity: {}
 
-command:
-- bash
-args:
-- -c
-- python manage.py collectstatic && gunicorn --bind 0:8000 --statsd-host=prometheus-statsd-exporter.monitoring:9125 --statsd-prefix=app-server ezl_app_server.wsgi:application --log-level info
+# Python 앱은 자체적으로 실행되므로 command/args 불필요
+# command:
+# - python
+# args:
+# - app.py
 
 secret:
   secretName: ezl-app-server-secrets
   secretKey:
-  - API_KEY
-  - FCM_CERTIFICATE_FILE_KEY
-  - CASHBEE3_FCM_CERTIFICATE_FILE_KEY
-  - CASHBEE_CHARGE_FCM_CERTIFICATE_FILE_KEY
-  - BACKOFFICE_USER_JWT_SECRET
-  - BACKOFFICE_USER_PASSWORD_SECRET
-  - CELERY_BROKER_URL
-  - CMS_API_BASE_URL
-  - CMS_TOKEN
+  - DB_PASSWORD
   - DB_HOST
   - DB_NAME
-  - DB_PASSWORD
-  - DB_PORT
   - DB_USER
-  - DJANGO_SETTINGS_MODULE
-  - ECMS_DB_NAME
-  - HYPHEN_AES256HEXKEY
-  - HYPHEN_BASE_URL
-  - HYPHEN_CLIENT_TOKEN
-  - HYPHEN_SEQUENCE_NO
-  - SENTRY_DSN
-  - SECRET_KEY
-  - USER_DATA_ENCRYPT_SALT
-  - CELERY_BROKER_CONNECTION_STRING
-  - AWS_CLOUDFRONT_URL
-  - INTGAPP_USER_JWT_SECRET
-  - EZL_AES256KEY
-  - BUZZBOOSTER_IOS_APP_ID
-  - BUZZBOOSTER_AOS_APP_ID
-  - PAYMENT_PASSWORD_HASH_SALT
-  - KAKAO_APP_ADMIN_KEY
-  - EZLWALK_POINT_EXPIRE_PERIOD_DAYS
-  - BUZZBOOSTER_POINT_EXPIRE_PERIOD_DAYS
-  - BUZZBENEFIT_POINT_EXPIRE_PERIOD_DAYS
-  - NASMEDIA_POINT_EXPIRE_PERIOD_DAYS
-  - HEALTHCHECK_API_KEY
-  - URL_SHORTENER_API_BASE_URL
-  - DEV_DB_HOST
-  - DEV_DB_NAME
-  - DEV_DB_PASSWORD
-  - DEV_DB_PORT
-  - DEV_DB_USER
-  - SES_ROLE_ARN
-  - EMAIL_RESULT_SQS_URL
-  - EZL_APPLICATION_SQS_QUEUE_URL
-  - EZL_PUSH_NOTIFICATION_EVENTS_SQS_URL
-  - USER_CI_ENCRYPT_KEY
+  - DB_PORT
+
+# Argo Rollouts 블루-그린 배포 설정
+rollout:
+  # Rollout 사용 여부 (false면 기본 Deployment 사용)
+  enabled: false
   
-work-queue:
-  serviceAccount:
-    name: app-server
-  command:
-    - celery
-    - -A
-    - ezl_app_server
-    - worker
-    - --loglevel=info
-    - --concurrency=1
-  enabled: true
-celery-beat:
-  serviceAccount:
-    name: app-server
-  command:
-    - celery
-    - -A
-    - ezl_app_server
-    - beat
-    - --loglevel=info
-  enabled: true
-sqs-poller:
-  serviceAccount:
-    name: app-server
-  command:
-    - python
-    - manage.py
-    - sqs_poller
-  enabled: true
+  # 블루-그린 배포 전략
+  strategy:
+    blueGreen:
+      # 자동 프로모션 설정 (false면 수동 승인 필요)
+      autoPromotionEnabled: false
+      
+      # 이전 버전 스케일 다운 지연 시간 (초)
+      scaleDownDelaySeconds: 30
+      
+      # 프리뷰 환경 레플리카 수 (선택사항, 미설정시 메인과 동일)
+      previewReplicaCount: 1
+      
+      # 프로모션 전 자동 분석 설정
+      prePromotionAnalysis:
+        enabled: false
+      
+      # 프로모션 후 자동 분석 설정  
+      postPromotionAnalysis:
+        enabled: false
+
+  # 프리뷰 서비스 설정
+  previewService:
+    type: ClusterIP
+    # NodePort 사용시 포트 지정
+    # nodePort: 30080
+
+  # 분석 템플릿 설정
+  analysisTemplate:
+    enabled: false
+    
+    # Prometheus 설정
+    prometheus:
+      address: "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090"
+    
+    # 메트릭별 설정
+    metrics:
+      # HTTP 성공률
+      successRate:
+        interval: "10s"
+        count: 3
+        threshold: 0.95  # 95% 이상 성공률
+        failureLimit: 2
+      
+      # 응답 시간
+      responseTime:
+        interval: "10s" 
+        count: 3
+        threshold: 0.5   # 0.5초 이하
+        failureLimit: 2
+      
+      # 팟 준비 상태
+      podReady:
+        interval: "10s"
+        count: 3
+        failureLimit: 1

@@ -1,0 +1,12 @@
+dependencies:
+- name: push-system
+  repository: file://../push-system/
+  version: 0.1.0
+- name: push-system
+  repository: file://../push-system/
+  version: 0.1.0
+- name: push-system
+  repository: file://../push-system/
+  version: 0.1.0
+digest: sha256:0553bf1e1a13d504c372749a2ed1d8f03ab8de3d650c3a6d4adc92f780e56488
+generated: "2025-05-25T04:56:11.044295295Z"
