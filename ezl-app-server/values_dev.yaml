@@ -15,6 +15,7 @@ ingress:
       pathType: Prefix
       whitelist:
         - 58.239.25.4
+        - 117.111.5.71
 
 # 개발용 설정
 replicaCount: 2
