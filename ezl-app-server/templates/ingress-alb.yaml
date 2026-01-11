@@ -14,6 +14,12 @@ metadata:
     {{- if .Values.alb.whitelist }}
     alb.ingress.kubernetes.io/inbound-cidrs: {{ join "," .Values.alb.whitelist }}
     {{- end }}
+    {{- if .Values.alb.setIdentifier }}
+    external-dns.alpha.kubernetes.io/set-identifier: {{ .Values.alb.setIdentifier }}
+    {{- end }}
+    {{- if .Values.alb.weight }}
+    external-dns.alpha.kubernetes.io/aws-weight: {{ .Values.alb.weight | quote }}
+    {{- end }}
 spec:
   ingressClassName: {{ .Values.alb.className | default "alb" }}
   {{- if .Values.alb.tls }}

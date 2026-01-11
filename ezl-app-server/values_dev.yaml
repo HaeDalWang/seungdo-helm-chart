@@ -9,6 +9,8 @@ serviceAccount:
 ingress:
   enabled: true
   className: nginx
+  setIdentifier: app-nginx
+  weight: 50
   hosts:
     - host: app.sd.seungdobae.com
       path: /
@@ -20,6 +22,8 @@ ingress:
 alb:
   enabled: true    
   className: alb
+  setIdentifier: app-alb
+  weight: 50
   whitelist:
     - 58.239.25.4/32
     - 117.111.5.71/32

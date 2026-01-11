@@ -9,8 +9,8 @@ metadata:
   name: {{ $fullName }}-{{ regexFind "^([^.]+)" .host }}{{ if ne .path "/"}}{{ .path | replace "/" "-" | replace "[" "" | replace "]" "" }}{{ end }}
   labels:
     {{- include "app-server.labels" $ | nindent 4 }}
-  {{- with $.Values.ingress.annotations }}
   annotations:
+  {{- with $.Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
   {{- if .whitelist }}
@@ -21,6 +21,12 @@ metadata:
   {{- end }}
   {{- if regexMatch ".*[\\[\\]\\*].*" .path }}
     nginx.ingress.kubernetes.io/use-regex: "true"
+  {{- end }}
+  {{- if $.Values.ingress.setIdentifier }}
+    external-dns.alpha.kubernetes.io/set-identifier: {{ $.Values.ingress.setIdentifier }}
+  {{- end }}
+  {{- if $.Values.ingress.weight }}
+    external-dns.alpha.kubernetes.io/aws-weight: {{ $.Values.ingress.weight | quote }}
   {{- end }}
 spec:
   ingressClassName: {{ $.Values.ingress.className }}
