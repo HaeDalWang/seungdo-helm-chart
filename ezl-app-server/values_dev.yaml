@@ -21,12 +21,13 @@ alb:
   enabled: true    
   className: alb
   whitelist:
-    - 58.239.25.4
-    - 117.111.5.71
+    - 58.239.25.4/32
+    - 117.111.5.71/32
   hosts:
     - host: app.sd.seungdobae.com
-      path: /
-      pathType: Prefix
+      paths:
+        - path: /
+          pathType: Prefix
   
 # 개발용 설정
 replicaCount: 2
