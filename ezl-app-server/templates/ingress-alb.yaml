@@ -1,0 +1,46 @@
+{{- if .Values.alb.enabled -}}
+{{- $fullName := include "app-server.fullname" . -}}
+{{- $svcPort := .Values.service.port -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}-alb
+  labels:
+    {{- include "app-server.labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.alb.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- if .Values.alb.whitelist }}
+    alb.ingress.kubernetes.io/inbound-cidrs: {{ join "," .Values.alb.whitelist }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.alb.className | default "alb" }}
+  {{- if .Values.alb.tls }}
+  tls:
+    {{- range .Values.alb.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      {{- if .secretName }}
+      secretName: {{ .secretName }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.alb.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType | default "Prefix" }}
+            backend:
+              service:
+                name: {{ $fullName }}
+                port:
+                  number: {{ $svcPort }}
+          {{- end }}
+    {{- end }}
+{{- end }}
