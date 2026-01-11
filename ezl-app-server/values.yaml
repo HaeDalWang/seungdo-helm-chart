@@ -98,7 +98,7 @@ alb:
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
     alb.ingress.kubernetes.io/ssl-redirect: "443"
     # Host 헤더 보존 (클라이언트 요청의 원본 Host 헤더를 백엔드로 전달)
-    alb.ingress.kubernetes.io/load-balancer-attributes: preserve_host_header.enabled=true
+    alb.ingress.kubernetes.io/load-balancer-attributes: routing.http.preserve_host_header.enabled=true
     # Host을 옮바르게 적었을 경우 인증서 디스커버리를 통해 할당됨으로 굳이 명시하지 않아도됨
     # ref: https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/ingress/cert_discovery/
     # alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:region:account:certificate/xxx
