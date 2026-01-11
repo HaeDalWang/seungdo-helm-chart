@@ -93,11 +93,16 @@ alb:
   className: alb
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing  # internet-facing 또는 internal
-    alb.ingress.kubernetes.io/target-type: ip    
-    alb.ingress.kubernetes.io/group.name: ezl-app-alb-group  # ALB 공유를 위한 그룹 이름      # ip 또는 instance
+    alb.ingress.kubernetes.io/target-type: ip          # ip 또는 instance
+    alb.ingress.kubernetes.io/group.name: ezl-app-alb-group  # ALB 공유를 위한 그룹 이름
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    # Host 헤더 보존 (클라이언트 요청의 원본 Host 헤더를 백엔드로 전달)
+    alb.ingress.kubernetes.io/load-balancer-attributes: preserve_host_header.enabled=true
+    # Host을 옮바르게 적었을 경우 인증서 디스커버리를 통해 할당됨으로 굳이 명시하지 않아도됨
+    # ref: https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/ingress/cert_discovery/
     # alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:region:account:certificate/xxx
-    # alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-    # alb.ingress.kubernetes.io/ssl-redirect: "443"
+    
     # alb.ingress.kubernetes.io/healthcheck-path: /health
     # alb.ingress.kubernetes.io/healthcheck-interval-seconds: "15"
     # alb.ingress.kubernetes.io/healthcheck-timeout-seconds: "5"
@@ -105,16 +110,9 @@ alb:
     # alb.ingress.kubernetes.io/unhealthy-threshold-count: "2"
     # alb.ingress.kubernetes.io/success-codes: "200"
     # alb.ingress.kubernetes.io/group.order: "1"
-  # IP 접근 제한 옵션 (nginx whitelist 대체)
-  # 방법 1: inbound-cidrs - ALB 인바운드 트래픽 CIDR 제한 (가장 간단)
   # whitelist:
   #   - 58.239.25.4/32
   #   - 10.0.0.0/8
-  # 방법 2: Security Group 지정
-  # securityGroups:
-  #   - sg-xxxxxxxxx
-  # 방법 3: WAF ACL 연결 (가장 강력, 세밀한 제어 가능)
-  # wafAclArn: arn:aws:wafv2:ap-northeast-2:123456789:regional/webacl/my-acl/xxx
   hosts:
     - host: chart-example.local
       paths:
