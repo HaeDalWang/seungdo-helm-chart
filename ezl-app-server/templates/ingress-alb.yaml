@@ -16,9 +16,7 @@ metadata:
     {{- end }}
     {{- if .Values.alb.setIdentifier }}
     external-dns.alpha.kubernetes.io/set-identifier: {{ .Values.alb.setIdentifier }}
-    {{- end }}
-    {{- if .Values.alb.weight }}
-    external-dns.alpha.kubernetes.io/aws-weight: {{ .Values.alb.weight | quote }}
+    external-dns.alpha.kubernetes.io/aws-weight: {{ .Values.alb.weight | default 0 | quote }}
     {{- end }}
 spec:
   ingressClassName: {{ .Values.alb.className | default "alb" }}
