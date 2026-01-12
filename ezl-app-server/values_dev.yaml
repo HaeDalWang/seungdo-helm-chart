@@ -27,6 +27,7 @@ alb:
   whitelist:
     - 58.239.25.4/32
     - 117.111.5.71/32
+    - 211.212.235.69/32
   hosts:
     - host: app.sd.seungdobae.com
       paths:
